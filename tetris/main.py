@@ -1,58 +1,85 @@
-import sys
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QLabel
+import pygame,sys
+from game import Game
+from colors import Colors
 
-class TetrisGame(QMainWindow):
-    def __init__(self):
-        super().__init__()
+pygame.init()
 
-        self.init_ui()
+title_font = pygame.font.Font(None, 40)
+score_surface = title_font.render("Score", True, Colors.white)
+next_surface = title_font.render("Next", True, Colors.white)
+game_over_surface = title_font.render("GAME OVER", True, Colors.white)
 
-    def init_ui(self):
-        self.setWindowTitle('PyQt Tetris')
-        self.setGeometry(100, 100, 400, 600)
+score_rect = pygame.Rect(320, 55, 170, 60)
+next_rect = pygame.Rect(320, 215, 170, 180)
 
-        self.central_widget = QWidget(self)
-        self.setCentralWidget(self.central_widget)
+screen = pygame.display.set_mode((500, 620))
+pygame.display.set_caption("Python Tetris")
 
-        self.grid_layout = QGridLayout()
-        self.central_widget.setLayout(self.grid_layout)
+clock = pygame.time.Clock()
 
-        self.board = [[0] * 10 for _ in range(20)]
+game = Game()
 
-        self.current_block = self.new_block()
+GAME_UPDATE = pygame.USEREVENT
+pygame.time.set_timer(GAME_UPDATE, 200)
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.move_block_down)
-        self.timer.start(500)
+while True:
+	event = pygame.event.poll()
+	if event.type == pygame.QUIT:
+		pygame.quit()
+		sys.exit()
 
-    def new_block(self):
-        # Implement logic to create a new block
-        pass
+	pressed = pygame.key.get_pressed()
+	if event.type == pygame.KEYDOWN:
+		if game.game_over == True:
+			game.game_over = False
+			game.reset()
+		###############################################
+		# if event.key == pygame.K_LEFT and game.game_over == False:
+		# 	game.move_left()
+		# if event.key == pygame.K_RIGHT and game.game_over == False:
+		# 	game.move_right()
+		# if event.key == pygame.K_SPACE and game.game_over == False:
+		# 	game.move_right_down()
+		# 	game.update_score(0, 1)
+		# if event.key == pygame.K_DOWN and game.game_over == False:
+		# 	game.move_down()
+		# 	game.update_score(0, 1)
+		# if event.key == pygame.K_UP and game.game_over == False:
+		# 	game.rotate()
+		###############################################
+			
+		if pressed[pygame.K_LEFT] and game.game_over == False:
+			game.move_left()
+		if pressed[pygame.K_RIGHT] and game.game_over == False:
+			game.move_right()
+		if pressed[pygame.K_SPACE] and game.game_over == False:
+			game.move_right_down()
+			game.update_score(0, 1)
+		if pressed[pygame.K_DOWN] and game.game_over == False:
+			game.move_down()
+			game.update_score(0, 1)
+		if event.key == pygame.K_UP and game.game_over == False:
+			game.rotate()
 
-    def move_block_down(self):
-        # Implement logic to move the block down
-        pass
 
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Left:
-            # Implement logic to move the block left
-            pass
-        elif event.key() == Qt.Key_Right:
-            # Implement logic to move the block right
-            pass
-        elif event.key() == Qt.Key_Down:
-            # Implement logic to move the block down
-            pass
-        elif event.key() == Qt.Key_Up:
-            # Implement logic to rotate the block
-            pass
+	if event.type == GAME_UPDATE and game.game_over == False:
+		game.move_down()
 
-def main():
-    app = QApplication(sys.argv)
-    game = TetrisGame()
-    game.show()
-    sys.exit(app.exec_())
+	#Drawing
+	score_value_surface = title_font.render(str(game.score), True, Colors.white)
 
-if __name__ == '__main__':
-    main()
+	screen.fill(Colors.dark_blue)
+	screen.blit(score_surface, (365, 20, 50, 50))
+	screen.blit(next_surface, (375, 180, 50, 50))
+
+	if game.game_over == True:
+		screen.blit(game_over_surface, (320, 450, 50, 50))
+
+	pygame.draw.rect(screen, Colors.light_blue, score_rect, 0, 10)
+	screen.blit(score_value_surface, score_value_surface.get_rect(centerx = score_rect.centerx, 
+		centery = score_rect.centery))
+	pygame.draw.rect(screen, Colors.light_blue, next_rect, 0, 10)
+	game.draw(screen)
+
+	pygame.display.update()
+	clock.tick(60)
